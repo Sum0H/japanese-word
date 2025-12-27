@@ -1,5 +1,5 @@
 {
-  "name": "Kotoba Master (ことばマスター)",
-  "description": "A comprehensive Japanese vocabulary memorization tool that allows users to create custom word lists, register kanji with readings and meanings, and take randomized tests to track their learning progress.",
+  "name": "일어나 보자",
+  "description": "사용자가 직접 단어장을 만들고, 한자 원형과 읽는 법, 뜻을 등록하여 무작위 시험을 통해 일본어 실력을 향상시킬 수 있는 효율적인 단어 학습 도구입니다.",
   "requestFramePermissions": []
 }

@@ -52,9 +52,8 @@ const TestSession: React.FC<TestSessionProps> = ({ list, words, onFinish, onCanc
   };
 
   const handleExit = () => {
-    if (confirm('진행중인 시험을 중단하고 메인 화면으로 돌아가시겠습니까?')) {
-      window.location.href = 'index.html';
-    }
+    // 확인 팝업 없이 즉시 취소 처리
+    onCancel();
   };
 
   const progress = ((currentIndex) / shuffledWords.length) * 100;

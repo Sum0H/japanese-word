@@ -24,7 +24,7 @@ const Dashboard: React.FC<DashboardProps> = ({ lists, onCreate, onDelete, onSele
     }
     const dataStr = JSON.stringify(lists, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    const exportFileDefaultName = `kotoba-master-backup-${new Date().toISOString().split('T')[0]}.json`;
+    const exportFileDefaultName = `iriona-boja-backup-${new Date().toISOString().split('T')[0]}.json`;
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
@@ -131,45 +131,45 @@ const Dashboard: React.FC<DashboardProps> = ({ lists, onCreate, onDelete, onSele
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left table-fixed sm:table-auto">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs font-bold uppercase">
                 <tr>
-                  <th className="px-6 py-4">이름</th>
-                  <th className="px-6 py-4 text-center">단어 수</th>
-                  <th className="px-6 py-4 text-center">생성일</th>
-                  <th className="px-6 py-4 text-right">관리</th>
+                  <th className="px-6 py-4 whitespace-nowrap">이름</th>
+                  <th className="px-4 py-4 text-center whitespace-nowrap w-20 sm:w-24">단어 수</th>
+                  <th className="px-6 py-4 text-center whitespace-nowrap hidden sm:table-cell">생성일</th>
+                  <th className="px-6 py-4 text-right whitespace-nowrap w-32 sm:w-40">관리</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {lists.map(list => (
                   <tr key={list.id} className="hover:bg-indigo-50/30 transition-colors group">
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 overflow-hidden">
                       <div 
                         onClick={() => onSelect(list.id)} 
                         className="cursor-pointer"
                       >
-                        <div className="font-bold text-slate-800 text-base group-hover:text-indigo-600 transition-colors">
+                        <div className="font-bold text-slate-800 text-base group-hover:text-indigo-600 transition-colors whitespace-nowrap truncate" title={list.title}>
                           {list.title}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 py-4 text-center whitespace-nowrap">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 border border-indigo-100">
                         {list.words.length}개
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center text-sm text-slate-400">
+                    <td className="px-6 py-4 text-center text-sm text-slate-400 whitespace-nowrap hidden sm:table-cell">
                       <div className="flex items-center justify-center gap-1.5">
                         <Clock size={14} />
                         {new Date(list.createdAt).toLocaleDateString()}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1 sm:gap-2">
                         <button 
                           onClick={() => onSelect(list.id)}
                           title="단어 관리"
-                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                          className="p-1.5 sm:p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                         >
                           <Settings2 size={18} />
                         </button>
@@ -177,7 +177,7 @@ const Dashboard: React.FC<DashboardProps> = ({ lists, onCreate, onDelete, onSele
                           onClick={() => onStartTest(list)}
                           title="시험 보기"
                           disabled={list.words.length === 0}
-                          className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                          className="p-1.5 sm:p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400"
                         >
                           <Play size={18} fill="currentColor" />
                         </button>
@@ -187,7 +187,7 @@ const Dashboard: React.FC<DashboardProps> = ({ lists, onCreate, onDelete, onSele
                             onDelete(list.id);
                           }}
                           title="삭제"
-                          className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                          className="p-1.5 sm:p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                         >
                           <Trash2 size={18} />
                         </button>

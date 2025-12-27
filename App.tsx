@@ -8,13 +8,24 @@ import TestSession from './components/TestSession';
 import ResultView from './components/ResultView';
 
 const App: React.FC = () => {
+  // 1. 단어장 목록 복구
   const [lists, setLists] = useState<VocabList[]>(() => {
     const saved = localStorage.getItem('kotoba-lists');
     return saved ? JSON.parse(saved) : [];
   });
   
-  const [currentView, setCurrentView] = useState<ViewState>('HOME');
-  const [selectedListId, setSelectedListId] = useState<string | null>(null);
+  // 2. 현재 화면 상태 복구 (TEST나 RESULT 상태로 시작하는 것은 불안정하므로 HOME/DETAIL로 유도)
+  const [currentView, setCurrentView] = useState<ViewState>(() => {
+    const savedView = localStorage.getItem('kotoba-current-view') as ViewState;
+    if (savedView === 'TEST' || savedView === 'RESULT') return 'HOME';
+    return savedView || 'HOME';
+  });
+
+  // 3. 선택된 단어장 ID 복구
+  const [selectedListId, setSelectedListId] = useState<string | null>(() => {
+    return localStorage.getItem('kotoba-selected-list-id');
+  });
+
   const [activeTestWords, setActiveTestWords] = useState<Word[]>([]);
   const [testResults, setTestResults] = useState<{
     list: VocabList;
@@ -22,10 +33,22 @@ const App: React.FC = () => {
     shuffledWords: Word[];
   } | null>(null);
 
-  // Persistence
+  // 데이터 지속성 유지 (Persistence Effects)
   useEffect(() => {
     localStorage.setItem('kotoba-lists', JSON.stringify(lists));
   }, [lists]);
+
+  useEffect(() => {
+    localStorage.setItem('kotoba-current-view', currentView);
+  }, [currentView]);
+
+  useEffect(() => {
+    if (selectedListId) {
+      localStorage.setItem('kotoba-selected-list-id', selectedListId);
+    } else {
+      localStorage.removeItem('kotoba-selected-list-id');
+    }
+  }, [selectedListId]);
 
   const handleCreateList = (title: string, description: string) => {
     const newList: VocabList = {
@@ -39,10 +62,8 @@ const App: React.FC = () => {
   };
 
   const handleDeleteList = (id: string) => {
-    if (confirm('이 단어장 목록을 정말 삭제하시겠습니까?')) {
-      setLists(prev => prev.filter(l => l.id !== id));
-      if (selectedListId === id) setSelectedListId(null);
-    }
+    setLists(prev => prev.filter(l => l.id !== id));
+    if (selectedListId === id) setSelectedListId(null);
   };
 
   const handleUpdateWords = (listId: string, words: Word[]) => {
@@ -81,11 +102,14 @@ const App: React.FC = () => {
       {/* Navigation Header */}
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentView('HOME')}>
+          <div 
+            className="flex items-center gap-2 cursor-pointer" 
+            onClick={() => setCurrentView('HOME')}
+          >
             <div className="bg-indigo-600 p-2 rounded-lg text-white">
-              < BookOpen size={20} />
+              <BookOpen size={20} />
             </div>
-            <h1 className="text-xl font-bold text-indigo-900">Kotoba Master</h1>
+            <h1 className="text-xl font-bold text-indigo-900">일어나 보자</h1>
           </div>
           {currentView !== 'HOME' && (
             <button 
@@ -139,6 +163,19 @@ const App: React.FC = () => {
             onRetryIncorrect={(words) => startTest(testResults.list, words)}
             onGoHome={() => setCurrentView('HOME')}
           />
+        )}
+
+        {/* 선택된 리스트가 사라졌을 경우(삭제 등) 홈으로 복구하는 안전장치 */}
+        {currentView === 'LIST_DETAIL' && !currentList && (
+          <div className="text-center py-20">
+            <p className="text-slate-500 mb-4">선택된 단어장을 찾을 수 없습니다.</p>
+            <button 
+              onClick={() => setCurrentView('HOME')}
+              className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold"
+            >
+              홈으로 돌아가기
+            </button>
+          </div>
         )}
       </main>
     </div>

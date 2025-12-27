@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Search, Edit2, Check, X } from 'lucide-react';
+import { Plus, Trash2, Search, Edit2, Check, X, CheckSquare, Square } from 'lucide-react';
 import { Word, VocabList } from '../types';
 
 interface ListDetailProps {
@@ -15,6 +15,9 @@ const ListDetail: React.FC<ListDetailProps> = ({ list, onUpdateWords, onUpdateMe
   const [newReading, setNewReading] = useState('');
   const [newMeaning, setNewMeaning] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Selection state for batch actions
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Metadata Editing State
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
@@ -107,8 +110,33 @@ const ListDetail: React.FC<ListDetailProps> = ({ list, onUpdateWords, onUpdateMe
   };
 
   const removeWord = (id: string) => {
-    if (confirm('이 단어를 삭제하시겠습니까?')) {
-      onUpdateWords(list.words.filter(w => w.id !== id));
+    onUpdateWords(list.words.filter(w => w.id !== id));
+    const newSelected = new Set(selectedIds);
+    newSelected.delete(id);
+    setSelectedIds(newSelected);
+  };
+
+  const handleBatchDelete = () => {
+    if (selectedIds.size === 0) return;
+    onUpdateWords(list.words.filter(w => !selectedIds.has(w.id)));
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredWords.length && filteredWords.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredWords.map(w => w.id)));
     }
   };
 
@@ -157,7 +185,7 @@ const ListDetail: React.FC<ListDetailProps> = ({ list, onUpdateWords, onUpdateMe
             </div>
           ) : (
             <div className="group relative pr-10">
-              <h2 className="text-3xl font-bold text-slate-800 flex items-center gap-2">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 flex items-center gap-2">
                 {list.title}
                 <button 
                   onClick={() => setIsEditingMetadata(true)}
@@ -167,7 +195,7 @@ const ListDetail: React.FC<ListDetailProps> = ({ list, onUpdateWords, onUpdateMe
                   <Edit2 size={18} />
                 </button>
               </h2>
-              <p className="text-slate-500 mt-1">{list.description || '설명이 없습니다.'}</p>
+              <p className="text-slate-500 mt-1 text-sm sm:text-base">{list.description || '설명이 없습니다.'}</p>
             </div>
           )}
         </div>
@@ -181,7 +209,7 @@ const ListDetail: React.FC<ListDetailProps> = ({ list, onUpdateWords, onUpdateMe
       </div>
 
       {/* Word Registration Form */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
         <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
           <Plus className="text-indigo-500" size={20} />
           단어 등록하기
@@ -234,88 +262,121 @@ const ListDetail: React.FC<ListDetailProps> = ({ list, onUpdateWords, onUpdateMe
 
       {/* Word List Search & Table */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-100 flex items-center gap-3">
-          <Search size={18} className="text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="단어 검색..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 outline-none text-sm text-slate-600 bg-transparent"
-          />
-          <div className="text-xs font-medium text-slate-400">
-            총 {list.words.length}개 단어
+        <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-[150px]">
+            <Search size={18} className="text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="단어 검색..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1 outline-none text-sm text-slate-600 bg-transparent"
+            />
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {selectedIds.size > 0 && (
+              <button 
+                onClick={handleBatchDelete}
+                className="flex items-center gap-2 bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold hover:bg-red-100 transition-all animate-in slide-in-from-right-2"
+              >
+                <Trash2 size={16} />
+                <span>{selectedIds.size}개 삭제</span>
+              </button>
+            )}
+            <div className="text-[10px] sm:text-xs font-medium text-slate-400">
+              총 {list.words.length}개
+            </div>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left table-fixed">
-            <thead className="bg-slate-50 text-slate-500 text-xs font-bold uppercase">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 text-slate-500 text-[10px] sm:text-xs font-bold uppercase border-b border-slate-200">
               <tr>
-                <th className="px-6 py-4 w-1/3">원형</th>
-                <th className="px-6 py-4 w-1/4">읽는 법</th>
-                <th className="px-6 py-4 w-1/3">뜻</th>
-                <th className="px-6 py-4 text-center w-24">관리</th>
+                <th className="px-2 sm:px-4 py-3 sm:py-4 w-10 sm:w-12 text-center whitespace-nowrap">
+                  <button 
+                    onClick={toggleSelectAll}
+                    className="p-1 hover:bg-slate-200 rounded transition-colors text-slate-400"
+                  >
+                    {selectedIds.size === filteredWords.length && filteredWords.length > 0 
+                      ? <CheckSquare size={16} className="text-indigo-600" /> 
+                      : <Square size={16} />
+                    }
+                  </button>
+                </th>
+                <th className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap">원형</th>
+                <th className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap">읽는 법</th>
+                <th className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap">뜻</th>
+                <th className="px-2 sm:px-6 py-3 sm:py-4 text-center whitespace-nowrap w-20 sm:w-24">관리</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredWords.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
-                    {searchTerm ? '검색 결과가 없습니다.' : '등록된 단어가 없습니다. 위에서 단어를 추가해 보세요!'}
+                  <td colSpan={5} className="px-6 py-12 text-center text-slate-400 text-sm">
+                    {searchTerm ? '검색 결과가 없습니다.' : '등록된 단어가 없습니다.'}
                   </td>
                 </tr>
               ) : (
                 filteredWords.map(word => (
-                  <tr key={word.id} className={`transition-all ${editingWordId === word.id ? 'bg-indigo-50/50 shadow-inner' : 'hover:bg-slate-50/80'}`}>
+                  <tr key={word.id} className={`transition-all ${editingWordId === word.id ? 'bg-indigo-50/50 shadow-inner' : selectedIds.has(word.id) ? 'bg-indigo-50/30' : 'hover:bg-slate-50/80'}`}>
+                    <td className="px-2 sm:px-4 py-3 sm:py-4 text-center">
+                       <button 
+                        onClick={() => toggleSelect(word.id)}
+                        className="p-1 hover:bg-indigo-100 rounded transition-colors text-slate-300"
+                      >
+                        {selectedIds.has(word.id) 
+                          ? <CheckSquare size={16} className="text-indigo-600" /> 
+                          : <Square size={16} />
+                        }
+                      </button>
+                    </td>
                     {editingWordId === word.id ? (
                       <>
-                        <td className="px-6 py-3">
+                        <td className="px-2 sm:px-6 py-2">
                           <input 
                             ref={kanjiEditRef}
                             type="text" 
                             value={editKanji}
                             onChange={(e) => setEditKanji(e.target.value)}
-                            className="w-full px-2 py-1.5 text-lg font-bold text-black bg-white border-2 border-indigo-400 rounded-md outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm"
+                            className="w-full px-2 py-1.5 text-base sm:text-lg font-bold text-black bg-white border-2 border-indigo-400 rounded-md outline-none transition-all shadow-sm"
                             onKeyDown={(e) => e.key === 'Enter' && saveEditedWord(word.id)}
-                            onBlur={(e) => !e.relatedTarget && setTimeout(() => { if(!editingWordId) return; }, 100)}
                           />
                         </td>
-                        <td className="px-6 py-3">
+                        <td className="px-2 sm:px-6 py-2">
                           <input 
                             ref={readingEditRef}
                             type="text" 
                             value={editReading}
                             onChange={(e) => setEditReading(e.target.value)}
-                            className="w-full px-2 py-1.5 text-md font-medium text-indigo-600 bg-white border-2 border-indigo-400 rounded-md outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm"
+                            className="w-full px-2 py-1.5 text-sm sm:text-md font-medium text-indigo-600 bg-white border-2 border-indigo-400 rounded-md outline-none transition-all shadow-sm"
                             onKeyDown={(e) => e.key === 'Enter' && saveEditedWord(word.id)}
                           />
                         </td>
-                        <td className="px-6 py-3">
+                        <td className="px-2 sm:px-6 py-2">
                           <input 
                             ref={meaningEditRef}
                             type="text" 
                             value={editMeaning}
                             onChange={(e) => setEditMeaning(e.target.value)}
-                            className="w-full px-2 py-1.5 text-sm text-slate-600 bg-white border-2 border-indigo-400 rounded-md outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm"
+                            className="w-full px-2 py-1.5 text-xs sm:text-sm text-slate-600 bg-white border-2 border-indigo-400 rounded-md outline-none transition-all shadow-sm"
                             onKeyDown={(e) => e.key === 'Enter' && saveEditedWord(word.id)}
                           />
                         </td>
-                        <td className="px-6 py-3 text-center">
+                        <td className="px-2 sm:px-6 py-2 text-center">
                           <div className="flex items-center justify-center gap-1">
                             <button 
                               onClick={() => saveEditedWord(word.id)}
-                              className="text-white bg-green-500 hover:bg-green-600 p-2 rounded-lg transition-all shadow-sm"
-                              title="저장"
+                              className="text-white bg-green-500 hover:bg-green-600 p-1.5 rounded-lg transition-all"
                             >
-                              <Check size={18} />
+                              <Check size={16} />
                             </button>
                             <button 
                               onClick={cancelEditingWord}
-                              className="text-slate-500 bg-slate-200 hover:bg-slate-300 p-2 rounded-lg transition-all shadow-sm"
-                              title="취소"
+                              className="text-slate-500 bg-slate-200 hover:bg-slate-300 p-1.5 rounded-lg transition-all"
                             >
-                              <X size={18} />
+                              <X size={16} />
                             </button>
                           </div>
                         </td>
@@ -323,41 +384,36 @@ const ListDetail: React.FC<ListDetailProps> = ({ list, onUpdateWords, onUpdateMe
                     ) : (
                       <>
                         <td 
-                          className="px-6 py-4 font-bold text-slate-800 text-lg cursor-pointer hover:bg-indigo-50 transition-colors group/cell"
+                          className="px-2 sm:px-6 py-3 sm:py-4 font-bold text-slate-800 text-base sm:text-lg cursor-pointer hover:bg-indigo-50 transition-colors group/cell whitespace-nowrap max-w-[80px] sm:max-w-none"
                           onClick={() => startEditingWord(word, 'kanji')}
-                          title="클릭하여 원형 수정"
                         >
-                          <span className="group-hover/cell:text-indigo-600">{word.kanji}</span>
+                          <div className="truncate" title={word.kanji}>{word.kanji}</div>
                         </td>
                         <td 
-                          className="px-6 py-4 text-indigo-600 font-medium cursor-pointer hover:bg-indigo-50 transition-colors group/cell"
+                          className="px-2 sm:px-6 py-3 sm:py-4 text-indigo-600 font-medium text-sm sm:text-base cursor-pointer hover:bg-indigo-50 transition-colors group/cell whitespace-nowrap max-w-[80px] sm:max-w-none"
                           onClick={() => startEditingWord(word, 'reading')}
-                          title="클릭하여 읽는 법 수정"
                         >
-                          <span className="group-hover/cell:text-indigo-800">{word.reading}</span>
+                          <div className="truncate" title={word.reading}>{word.reading}</div>
                         </td>
                         <td 
-                          className="px-6 py-4 text-sm text-slate-600 cursor-pointer hover:bg-indigo-50 transition-colors group/cell"
+                          className="px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-600 cursor-pointer hover:bg-indigo-50 transition-colors group/cell whitespace-nowrap max-w-[100px] sm:max-w-none"
                           onClick={() => startEditingWord(word, 'meaning')}
-                          title="클릭하여 뜻 수정"
                         >
-                          <span className="group-hover/cell:text-indigo-600">{word.meaning}</span>
+                          <div className="truncate" title={word.meaning}>{word.meaning}</div>
                         </td>
-                        <td className="px-6 py-4 text-center">
-                          <div className="flex items-center justify-center gap-1 opacity-40 hover:opacity-100 transition-opacity">
+                        <td className="px-2 sm:px-6 py-3 sm:py-4 text-center">
+                          <div className="flex items-center justify-center gap-0.5 sm:gap-1 opacity-40 hover:opacity-100 transition-opacity">
                             <button 
                               onClick={() => startEditingWord(word, 'kanji')}
-                              className="text-slate-400 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-indigo-50 transition-all"
-                              title="수정"
+                              className="text-slate-400 hover:text-indigo-600 p-1 rounded-lg hover:bg-indigo-50 transition-all"
                             >
-                              <Edit2 size={16} />
+                              <Edit2 size={14} />
                             </button>
                             <button 
                               onClick={() => removeWord(word.id)}
-                              className="text-slate-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-all"
-                              title="삭제"
+                              className="text-slate-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition-all"
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </td>
