@@ -24,7 +24,7 @@ const Dashboard: React.FC<DashboardProps> = ({ lists, onCreate, onDelete, onSele
     }
     const dataStr = JSON.stringify(lists, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    const exportFileDefaultName = `iriona-boja-backup-${new Date().toISOString().split('T')[0]}.json`;
+    const exportFileDefaultName = `kotoba-master-backup-${new Date().toISOString().split('T')[0]}.json`;
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);

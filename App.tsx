@@ -85,7 +85,7 @@ const App: React.FC = () => {
             <div className="bg-indigo-600 p-2 rounded-lg text-white">
               < BookOpen size={20} />
             </div>
-            <h1 className="text-xl font-bold text-indigo-900">일어나 보자</h1>
+            <h1 className="text-xl font-bold text-indigo-900">Kotoba Master</h1>
           </div>
           {currentView !== 'HOME' && (
             <button 
